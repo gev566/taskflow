@@ -29,7 +29,7 @@ export function TaskFiltersBar({ filters, tags, found, total, onChange }: TaskFi
       <label>
         <span className="visually-hidden">Фильтр по приоритету</span>
         <select value={filters.priority} onChange={(e) => set('priority', e.target.value as Priority | 'all')}>
-          <option value="all">Любой приоритет</option>
+          <option value="all">Все приоритеты</option>
           {PRIORITIES.map((p) => (
             <option key={p} value={p}>
               {PRIORITY_LABELS[p]}
@@ -40,7 +40,7 @@ export function TaskFiltersBar({ filters, tags, found, total, onChange }: TaskFi
       <label>
         <span className="visually-hidden">Фильтр по метке</span>
         <select value={filters.tag} onChange={(e) => set('tag', e.target.value)}>
-          <option value="">Любая метка</option>
+          <option value="">Все метки</option>
           {tags.map((tag) => (
             <option key={tag} value={tag}>
               #{tag}

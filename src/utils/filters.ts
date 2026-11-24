@@ -5,7 +5,7 @@ export const DUE_FILTERS = ['all', 'overdue', 'today', 'week', 'none'] as const
 export type DueFilter = (typeof DUE_FILTERS)[number]
 
 export const DUE_FILTER_LABELS: Record<DueFilter, string> = {
-  all: 'Любой срок',
+  all: 'Все сроки',
   overdue: 'Просрочено',
   today: 'Сегодня',
   week: 'На 7 дней',

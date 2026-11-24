@@ -125,6 +125,9 @@ export function BoardPage() {
           {board.description && <p className="muted">{board.description}</p>}
         </div>
         <div className="page-actions">
+          <Link to={`/boards/${board.id}/stats`} className="btn">
+            Статистика
+          </Link>
           <button type="button" className="btn" onClick={() => setEditing(true)}>
             Изменить
           </button>

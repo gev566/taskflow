@@ -117,3 +117,16 @@ describe('поиск и фильтры', () => {
     expect(screen.getByRole('status', { name: 'Результаты фильтра' })).toHaveTextContent('Найдено 1 задача из 6')
   })
 })
+
+describe('статистика', () => {
+  beforeEach(() => useBoardsStore.getState().resetDemo())
+
+  it('открывается с доски и показывает итоги', async () => {
+    const user = userEvent.setup()
+    renderAt('/boards/mobile')
+    await user.click(screen.getByRole('link', { name: 'Статистика' }))
+    expect(screen.getByRole('heading', { name: 'Статистика' })).toBeInTheDocument()
+    expect(screen.getByText('Всего задач').nextSibling).toHaveTextContent('4')
+    expect(screen.getByRole('heading', { name: 'По колонкам' })).toBeInTheDocument()
+  })
+})

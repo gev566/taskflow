@@ -376,3 +376,32 @@ input[aria-invalid], textarea[aria-invalid] { border-color: var(--danger); }
 .filters-status { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 0.9rem; }
 .link-btn { padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; text-decoration: underline; }
 @media (max-width: 600px) { .filters > label:not(.filters-search) { flex: 1 1 calc(50% - 8px); } .filters select { width: 100%; } }
+
+/* Статистика */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.kpi, .card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.kpi strong { font-size: 1.8rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.text-danger { color: var(--danger); }
+.progress { height: 6px; margin-top: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--green); border-radius: inherit; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px; }
+.card h2 { margin-bottom: 10px; }
+.bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bar { display: grid; grid-template-columns: minmax(0, 120px) 1fr 32px; align-items: center; gap: 10px; }
+.bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; }
+.bar-track { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width 0.3s ease; }
+.bar-fill--high { background: var(--danger); }
+.bar-fill--medium { background: var(--orange); }
+.bar-fill--low { background: var(--green); }
+.bar-fill--tag { background: var(--blue); }
+.bar-value { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }

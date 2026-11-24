@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Board, BoardDraft, Column, Task, TaskDraft } from '../types'
-import { moveItem } from '../utils/array'
+import { moveItem, moveToColumn } from '../utils/array'
 import { createId } from '../utils/id'
 import { taskFieldsFromDraft } from '../utils/tasks'
 import { createDemoBoards, createDemoColumns, createDemoTasks, DEFAULT_COLUMNS } from './demo'
@@ -20,6 +20,7 @@ interface BoardsState {
   addTask: (draft: TaskDraft) => Task
   updateTask: (id: string, draft: TaskDraft) => void
   removeTask: (id: string) => void
+  moveTask: (id: string, columnId: string, index: number) => void
   resetDemo: () => void
 }
 
@@ -80,6 +81,8 @@ export const useBoardsStore = create<BoardsState>()(
       updateTask: (id, draft) =>
         set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...taskFieldsFromDraft(draft) } : t)) })),
       removeTask: (id) => set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+      // Перетаскивание: колонка и позиция внутри неё
+      moveTask: (id, columnId, index) => set((s) => ({ tasks: moveToColumn(s.tasks, id, columnId, index) })),
 
       resetDemo: () => set({ boards: createDemoBoards(), columns: createDemoColumns(), tasks: createDemoTasks() }),
     }),

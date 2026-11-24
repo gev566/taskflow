@@ -1,4 +1,19 @@
 import { useState } from 'react'
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  type Announcements,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { TaskCard } from '../components/TaskCard'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { AddColumn } from '../components/AddColumn'
@@ -25,8 +40,9 @@ export function BoardPage() {
       return s.tasks.filter((t) => ids.has(t.columnId))
     }),
   )
-  const { updateBoard, removeBoard, addColumn, renameColumn, removeColumn, moveColumn, addTask, updateTask, removeTask } = useBoardsStore(
+  const { updateBoard, removeBoard, addColumn, renameColumn, removeColumn, moveColumn, addTask, updateTask, removeTask, moveTask } = useBoardsStore(
     useShallow((s) => ({
+      moveTask: s.moveTask,
       addTask: s.addTask,
       updateTask: s.updateTask,
       removeTask: s.removeTask,
@@ -45,10 +61,54 @@ export function BoardPage() {
   // Окно задачи: создание в выбранной колонке или редактирование существующей
   const [taskDialog, setTaskDialog] = useState<{ mode: 'new'; columnId: string } | { mode: 'edit'; task: Task } | null>(null)
   const [taskToRemove, setTaskToRemove] = useState<Task | null>(null)
+  const [draggedId, setDraggedId] = useState<string | null>(null)
+
+  // Мышь: перетаскивание начинается после сдвига на 5px, иначе это обычный клик по карточке.
+  // Палец: после удержания 200 мс, чтобы не мешать прокрутке. Клавиатура: пробел, стрелки, пробел.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space', 'Enter'] },
+    }),
+  )
 
   if (!board) return <NotFoundPage />
 
   const titles = columns.map((c) => c.title)
+  const taskById = (id: unknown) => tasks.find((t) => t.id === id)
+  const columnTitle = (id: string) => columns.find((c) => c.id === id)?.title ?? ''
+  const dragged = draggedId ? taskById(draggedId) : undefined
+
+  // Куда бросили: на другую карточку (встаём на её место) или на пустое место колонки (в конец)
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setDraggedId(null)
+    const task = taskById(active.id)
+    if (!task || !over) return
+    const overTask = taskById(over.id)
+    const columnId = overTask ? overTask.columnId : (over.data.current?.columnId as string | undefined)
+    if (!columnId) return
+    const target = tasks.filter((t) => t.columnId === columnId)
+    const index = overTask ? target.indexOf(overTask) : target.length
+    if (task.columnId === columnId && target.indexOf(task) === index) return
+    moveTask(task.id, columnId, index)
+  }
+
+  // Подсказки для экранных дикторов на русском
+  const announcements: Announcements = {
+    onDragStart: ({ active }) => `Взята задача «${taskById(active.id)?.title ?? ''}»`,
+    onDragOver: ({ over }) => {
+      const t = over && taskById(over.id)
+      return t ? `Над задачей «${t.title}» в колонке «${columnTitle(t.columnId)}»` : ''
+    },
+    onDragEnd: ({ over }) => {
+      const t = over && taskById(over.id)
+      const col = t ? t.columnId : (over?.data.current?.columnId as string | undefined)
+      return col ? `Задача перемещена в колонку «${columnTitle(col)}»` : 'Перемещение отменено'
+    },
+    onDragCancel: () => 'Перемещение отменено',
+  }
 
   return (
     <section>
@@ -68,6 +128,19 @@ export function BoardPage() {
         </div>
       </div>
 
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={({ active }: DragStartEvent) => setDraggedId(String(active.id))}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setDraggedId(null)}
+        accessibility={{
+          announcements,
+          screenReaderInstructions: {
+            draggable: 'Чтобы перенести задачу, нажмите пробел, двигайте стрелками и нажмите пробел ещё раз. Escape — отмена.',
+          },
+        }}
+      >
       <div className="columns" role="list" aria-label="Колонки доски">
         {columns.map((column, index) => (
           <div role="listitem" key={column.id}>
@@ -87,6 +160,9 @@ export function BoardPage() {
         ))}
         <AddColumn existingTitles={titles} onAdd={(title) => addColumn(board.id, title)} />
       </div>
+        {/* Копия карточки, которая едет за курсором */}
+        <DragOverlay>{dragged ? <div className="drag-overlay"><TaskCard task={dragged} onOpen={() => {}} /></div> : null}</DragOverlay>
+      </DndContext>
 
       <Modal open={editing} title="Изменить доску" onClose={() => setEditing(false)}>
         <BoardForm

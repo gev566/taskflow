@@ -71,3 +71,12 @@ describe('задачи', () => {
     expect(store().tasks.some((t) => t.columnId.startsWith('site-'))).toBe(true)
   })
 })
+
+describe('перетаскивание задач', () => {
+  beforeEach(() => store().resetDemo())
+  it('moveTask переносит задачу в другую колонку на нужную позицию', () => {
+    store().moveTask('task-1', 'site-2', 1) // «Тёмная тема» встаёт второй в «К выполнению»
+    const titles = store().tasks.filter((t) => t.columnId === 'site-2').map((t) => t.title)
+    expect(titles).toEqual(['Новая главная страница', 'Тёмная тема для всего сайта', 'Фильтры в каталоге'])
+  })
+})

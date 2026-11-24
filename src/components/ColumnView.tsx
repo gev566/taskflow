@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
+import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { Column, Task } from '../types'
-import { TaskCard } from './TaskCard'
+import { SortableTask } from './SortableTask'
 import { validateColumnTitle } from '../utils/validation'
 
 interface ColumnViewProps {
@@ -14,10 +16,13 @@ interface ColumnViewProps {
   onRemove: () => void
   onAddTask: () => void
   onOpenTask: (task: Task) => void
+  dragDisabled?: boolean
 }
 
 // Колонка доски. Название меняется по клику — прямо на месте.
-export function ColumnView({ column, tasks, index, total, siblingTitles, onRename, onMove, onRemove, onAddTask, onOpenTask }: ColumnViewProps) {
+export function ColumnView({ column, tasks, index, total, siblingTitles, onRename, onMove, onRemove, onAddTask, onOpenTask, dragDisabled = false }: ColumnViewProps) {
+  // Вся колонка — зона, куда можно бросить карточку. Нужна и для пустых колонок.
+  const { setNodeRef, isOver } = useDroppable({ id: `column:${column.id}`, data: { columnId: column.id } })
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(column.title)
   const error = editing ? validateColumnTitle(title, siblingTitles) : ''
@@ -58,18 +63,18 @@ export function ColumnView({ column, tasks, index, total, siblingTitles, onRenam
         <span className="column-count" aria-label="Задач в колонке">{tasks.length}</span>
       </header>
 
-      <div className="column-body">
-        {tasks.length === 0 ? (
-          <p className="column-empty">Задач нет</p>
-        ) : (
-          <ul className="task-list">
-            {tasks.map((task) => (
-              <li key={task.id}>
-                <TaskCard task={task} onOpen={() => onOpenTask(task)} />
-              </li>
-            ))}
-          </ul>
-        )}
+      <div ref={setNodeRef} className={`column-body${isOver ? ' is-over' : ''}`}>
+        <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+          {tasks.length === 0 ? (
+            <p className="column-empty">{dragDisabled ? 'Ничего не найдено' : 'Перетащите задачу сюда'}</p>
+          ) : (
+            <ul className="task-list">
+              {tasks.map((task) => (
+                <SortableTask key={task.id} task={task} disabled={dragDisabled} onOpen={() => onOpenTask(task)} />
+              ))}
+            </ul>
+          )}
+        </SortableContext>
         <button type="button" className="add-task" onClick={onAddTask}>
           + Добавить задачу
         </button>

@@ -1,19 +1,23 @@
 import { useState, type FormEvent } from 'react'
-import type { Column } from '../types'
+import type { Column, Task } from '../types'
+import { TaskCard } from './TaskCard'
 import { validateColumnTitle } from '../utils/validation'
 
 interface ColumnViewProps {
   column: Column
+  tasks: Task[]
   index: number
   total: number
   siblingTitles: string[] // названия остальных колонок доски — для проверки на дубли
   onRename: (title: string) => void
   onMove: (direction: -1 | 1) => void
   onRemove: () => void
+  onAddTask: () => void
+  onOpenTask: (task: Task) => void
 }
 
 // Колонка доски. Название меняется по клику — прямо на месте.
-export function ColumnView({ column, index, total, siblingTitles, onRename, onMove, onRemove }: ColumnViewProps) {
+export function ColumnView({ column, tasks, index, total, siblingTitles, onRename, onMove, onRemove, onAddTask, onOpenTask }: ColumnViewProps) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(column.title)
   const error = editing ? validateColumnTitle(title, siblingTitles) : ''
@@ -51,11 +55,24 @@ export function ColumnView({ column, index, total, siblingTitles, onRename, onMo
             {column.title}
           </button>
         )}
-        <span className="column-count" aria-label="Задач в колонке">0</span>
+        <span className="column-count" aria-label="Задач в колонке">{tasks.length}</span>
       </header>
 
       <div className="column-body">
-        <p className="column-empty">Задачи появятся на следующем шаге</p>
+        {tasks.length === 0 ? (
+          <p className="column-empty">Задач нет</p>
+        ) : (
+          <ul className="task-list">
+            {tasks.map((task) => (
+              <li key={task.id}>
+                <TaskCard task={task} onOpen={() => onOpenTask(task)} />
+              </li>
+            ))}
+          </ul>
+        )}
+        <button type="button" className="add-task" onClick={onAddTask}>
+          + Добавить задачу
+        </button>
       </div>
 
       <footer className="column-actions">

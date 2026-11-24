@@ -32,3 +32,34 @@ export interface BoardDraft {
   description: string
   color: BoardColor
 }
+
+export const PRIORITIES = ['low', 'medium', 'high'] as const
+export type Priority = (typeof PRIORITIES)[number]
+
+export const PRIORITY_LABELS: Record<Priority, string> = {
+  low: 'Низкий',
+  medium: 'Средний',
+  high: 'Высокий',
+}
+
+// Задача лежит в колонке. Порядок задач в колонке — порядок в массиве.
+export interface Task {
+  id: string
+  columnId: string
+  title: string
+  description: string
+  priority: Priority
+  dueDate: string | null // 'YYYY-MM-DD' или null, если срока нет
+  tags: string[]
+  createdAt: string
+}
+
+// Поля формы задачи. Метки вводятся одной строкой через запятую.
+export interface TaskDraft {
+  title: string
+  description: string
+  priority: Priority
+  dueDate: string
+  tags: string
+  columnId: string
+}

@@ -45,3 +45,29 @@ describe('useBoardsStore', () => {
     expect(titlesOf('site')).toHaveLength(5)
   })
 })
+
+describe('задачи', () => {
+  beforeEach(() => store().resetDemo())
+  const tasksIn = (columnId: string) => store().tasks.filter((t) => t.columnId === columnId)
+
+  it('создаёт, меняет и удаляет задачу', () => {
+    const task = store().addTask({ title: ' Новая ', description: '', priority: 'high', dueDate: '', tags: 'Api', columnId: 'mobile-2' })
+    expect(task).toMatchObject({ title: 'Новая', priority: 'high', dueDate: null, tags: ['api'] })
+    store().updateTask(task.id, { title: 'Новая', description: 'd', priority: 'low', dueDate: '2026-12-01', tags: '', columnId: 'mobile-3' })
+    expect(store().tasks.find((t) => t.id === task.id)).toMatchObject({ columnId: 'mobile-3', priority: 'low', dueDate: '2026-12-01' })
+    store().removeTask(task.id)
+    expect(store().tasks.some((t) => t.id === task.id)).toBe(false)
+  })
+
+  it('удаление колонки удаляет её задачи', () => {
+    expect(tasksIn('site-2').length).toBeGreaterThan(0)
+    store().removeColumn('site-2')
+    expect(tasksIn('site-2')).toEqual([])
+  })
+
+  it('удаление доски удаляет задачи всех её колонок', () => {
+    store().removeBoard('personal')
+    expect(store().tasks.some((t) => t.columnId.startsWith('personal-'))).toBe(false)
+    expect(store().tasks.some((t) => t.columnId.startsWith('site-'))).toBe(true)
+  })
+})

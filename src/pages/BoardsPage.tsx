@@ -1,9 +1,17 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { BoardForm } from '../components/BoardForm'
+import { Modal } from '../components/Modal'
 import { useBoardsStore } from '../store/boards'
 import { formatDate, plural } from '../utils/format'
 
 export function BoardsPage() {
   const boards = useBoardsStore((s) => s.boards)
+  const columns = useBoardsStore((s) => s.columns)
+  const addBoard = useBoardsStore((s) => s.addBoard)
+  const resetDemo = useBoardsStore((s) => s.resetDemo)
+  const [creating, setCreating] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <section>
@@ -14,23 +22,48 @@ export function BoardsPage() {
             {boards.length} {plural(boards.length, ['доска', 'доски', 'досок'])}
           </p>
         </div>
+        <button type="button" className="btn btn--primary" onClick={() => setCreating(true)}>
+          + Новая доска
+        </button>
       </div>
 
       {boards.length === 0 ? (
-        <p className="empty">Досок пока нет.</p>
+        <div className="empty">
+          <p>Досок пока нет. Создайте первую или верните демо-данные.</p>
+          <button type="button" className="btn" onClick={resetDemo}>
+            Загрузить пример
+          </button>
+        </div>
       ) : (
         <ul className="board-grid">
-          {boards.map((board) => (
-            <li key={board.id}>
-              <Link to={`/boards/${board.id}`} className={`board-card board-card--${board.color}`}>
-                <h2>{board.title}</h2>
-                <p>{board.description}</p>
-                <span className="muted small">Создана {formatDate(board.createdAt)}</span>
-              </Link>
-            </li>
-          ))}
+          {boards.map((board) => {
+            const count = columns.filter((c) => c.boardId === board.id).length
+            return (
+              <li key={board.id}>
+                <Link to={`/boards/${board.id}`} className={`board-card board-card--${board.color}`}>
+                  <h2>{board.title}</h2>
+                  <p>{board.description || 'Без описания'}</p>
+                  <span className="muted small">
+                    {count} {plural(count, ['колонка', 'колонки', 'колонок'])} · создана {formatDate(board.createdAt)}
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       )}
+
+      <Modal open={creating} title="Новая доска" onClose={() => setCreating(false)}>
+        <BoardForm
+          submitLabel="Создать"
+          onCancel={() => setCreating(false)}
+          onSubmit={(draft) => {
+            const board = addBoard(draft)
+            setCreating(false)
+            navigate(`/boards/${board.id}`)
+          }}
+        />
+      </Modal>
     </section>
   )
 }

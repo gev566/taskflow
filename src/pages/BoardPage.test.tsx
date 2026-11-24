@@ -100,3 +100,20 @@ describe('задачи на доске', () => {
     expect(screen.queryByRole('button', { name: 'Задача «Push-уведомления»' })).not.toBeInTheDocument()
   })
 })
+
+describe('поиск и фильтры', () => {
+  beforeEach(() => useBoardsStore.getState().resetDemo())
+
+  it('ищет задачи и фильтрует по метке, состояние хранится в адресе', async () => {
+    const user = userEvent.setup()
+    renderAt('/boards/site?tag=дизайн')
+    expect(screen.getByRole('button', { name: 'Задача «Логотип в SVG»' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Задача «Фильтры в каталоге»' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Результаты фильтра' })).toHaveTextContent('Найдено 3 задачи из 6')
+
+    await user.click(screen.getByRole('button', { name: 'Сбросить' }))
+    await user.type(screen.getByLabelText('Поиск задач'), 'корзин')
+    expect(screen.getByRole('button', { name: 'Задача «Корзина: пересчёт итога»' })).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Результаты фильтра' })).toHaveTextContent('Найдено 1 задача из 6')
+  })
+})

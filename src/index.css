@@ -367,3 +367,12 @@ input[aria-invalid], textarea[aria-invalid] { border-color: var(--danger); }
 .drag-overlay .task-card { transform: rotate(2deg); box-shadow: 0 12px 28px rgb(16 24 40 / 22%); border-color: var(--accent); cursor: grabbing; }
 .column-body.is-over { background: color-mix(in srgb, var(--accent) 6%, transparent); border-radius: 8px; }
 .column-body { min-height: 60px; }
+
+/* Поиск и фильтры */
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.filters-search { flex: 1 1 240px; }
+.filters-search input { width: 100%; }
+.filters select { max-width: 100%; }
+.filters-status { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 0.9rem; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; text-decoration: underline; }
+@media (max-width: 600px) { .filters > label:not(.filters-search) { flex: 1 1 calc(50% - 8px); } .filters select { width: 100%; } }

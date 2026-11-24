@@ -14,7 +14,7 @@ import {
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { TaskCard } from '../components/TaskCard'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { AddColumn } from '../components/AddColumn'
 import { BoardForm } from '../components/BoardForm'
@@ -22,6 +22,8 @@ import { ColumnView } from '../components/ColumnView'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Modal } from '../components/Modal'
 import { TaskForm } from '../components/TaskForm'
+import { TaskFiltersBar } from '../components/TaskFiltersBar'
+import { collectTags, filterTasks, filtersFromParams, filtersToParams, isFiltering } from '../utils/filters'
 import { selectColumns, useBoardsStore } from '../store/boards'
 import type { Column, Task } from '../types'
 import { draftFromTask, emptyTaskDraft } from '../utils/tasks'
@@ -62,6 +64,9 @@ export function BoardPage() {
   const [taskDialog, setTaskDialog] = useState<{ mode: 'new'; columnId: string } | { mode: 'edit'; task: Task } | null>(null)
   const [taskToRemove, setTaskToRemove] = useState<Task | null>(null)
   const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filters = filtersFromParams(searchParams)
+  const filtering = isFiltering(filters)
 
   // Мышь: перетаскивание начинается после сдвига на 5px, иначе это обычный клик по карточке.
   // Палец: после удержания 200 мс, чтобы не мешать прокрутке. Клавиатура: пробел, стрелки, пробел.
@@ -77,6 +82,7 @@ export function BoardPage() {
   if (!board) return <NotFoundPage />
 
   const titles = columns.map((c) => c.title)
+  const visible = filtering ? filterTasks(tasks, filters) : tasks
   const taskById = (id: unknown) => tasks.find((t) => t.id === id)
   const columnTitle = (id: string) => columns.find((c) => c.id === id)?.title ?? ''
   const dragged = draggedId ? taskById(draggedId) : undefined
@@ -128,6 +134,14 @@ export function BoardPage() {
         </div>
       </div>
 
+      <TaskFiltersBar
+        filters={filters}
+        tags={collectTags(tasks)}
+        found={visible.length}
+        total={tasks.length}
+        onChange={(next) => setSearchParams(filtersToParams(next), { replace: true })}
+      />
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -146,7 +160,8 @@ export function BoardPage() {
           <div role="listitem" key={column.id}>
             <ColumnView
               column={column}
-              tasks={tasks.filter((t) => t.columnId === column.id)}
+              tasks={visible.filter((t) => t.columnId === column.id)}
+              dragDisabled={filtering}
               index={index}
               total={columns.length}
               siblingTitles={titles.filter((_, i) => i !== index)}
